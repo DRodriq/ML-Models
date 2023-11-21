@@ -1,7 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image
-from scipy import ndimage
+import sys
+import os
+sys.path.insert(1, os.getcwd())
 from utils import lr_utils, math_utils
 
 
@@ -124,7 +124,9 @@ class Model():
         for i in range(total):
             if(pred[i] == Y[i]):
                 correct = correct +1
-        print("Scored {} out of {}, or {}%".format(correct, total, correct/total*100))
+        per_score = correct/total*100
+        print("Scored {} out of {}, or {}%".format(correct, total, per_score))
+        return per_score
 
 
 if __name__ == '__main__':

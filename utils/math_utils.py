@@ -5,3 +5,6 @@ def sigmoid(z):
 
 def tanh(z):
     return(2/(1+np.exp(-2*z)))
+
+def column_wise_shuffle(data):
+    return(np.random.shuffle(data.T))
