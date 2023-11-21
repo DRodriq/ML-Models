@@ -1,19 +1,16 @@
 import numpy as np
-import copy
 import matplotlib.pyplot as plt
-import h5py
-import scipy
 from PIL import Image
 from scipy import ndimage
-from lr_utils import import_data
-from math_utils import sigmoid
+from utils import lr_utils, math_utils
 
 
 class Model():
 
-    def __init__(self):
+    def __init__(self, activation_func="sigmoid"):
         self.weights = np.zeros((2,1))
         self.bias = 0.0
+        self.act_function = activation_func
 
     def init_weights(self, data_shape):
         self.weights = np.zeros((data_shape,1))
@@ -33,7 +30,12 @@ class Model():
         cost -- negative log-likelihood cost for logistic regression
         """
         m = X.shape[1]
-        A = sigmoid(np.dot((self.weights).T, X) + self.bias)
+
+        if(self.act_function == "sigmoid"):
+            A = math_utils.sigmoid(np.dot((self.weights).T, X) + self.bias)
+        if(self.act_function == "tanh"):
+            A = math_utils.tanh(np.dot((self.weights).T, X) + self.bias)
+
         cost = (-1 / m) * np.sum(Y * np.log(A) + (1 - Y) * np.log(1 - A))
         
         # BACKWARD PROPAGATION (TO FIND GRAD)
@@ -100,7 +102,10 @@ class Model():
         w_cpy = self.weights.reshape(X.shape[0], 1)
         
         # Compute vector "A" predicting the probabilities of a cat being present in the picture
-        A = sigmoid(np.dot(w_cpy.T, X) + self.bias)
+        if(self.act_function == "sigmoid"):
+            A = math_utils.sigmoid(np.dot(w_cpy.T, X) + self.bias)
+        if(self.act_function == "tanh"):
+            A = math_utils.tanh(np.dot(w_cpy.T, X) + self.bias)
         
         for i in range(A.shape[1]):
             
@@ -123,9 +128,9 @@ class Model():
 
 
 if __name__ == '__main__':
-    data = import_data("cats", do_log=True)
+    data = lr_utils.import_data("cats", do_log=True)
     
-    logistic_regression = Model()
+    logistic_regression = Model(activation_func="sigmoid")
     logistic_regression.init_weights(data.get("Flattened Training Set").shape[0])
     logistic_regression.train(data.get("Flattened Training Set"), data.get("Training Set Labels"))
     predictions = logistic_regression.predict(data.get("Flattened Test Set"))
