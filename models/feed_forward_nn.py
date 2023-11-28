@@ -5,87 +5,53 @@ sys.path.insert(1, os.getcwd())
 from utils import lr_utils, math_utils
 
 
-class Model():
+class FF_NeuralNetwork():
 
-    def __init__(self, activation_func="sigmoid"):
-        self.weights = np.zeros((2,1))
-        self.bias = 0.0
+    def __init__(self, layer_dims, activation_func="sigmoid", log = "standard"):
+        self.weights = []
+        self.bias = []
+        self.pre_acts = []
         self.act_function = activation_func
-
-    def init_weights(self, data_shape):
-        self.weights = np.zeros((data_shape,1))
-
-    def propagate(self, X, Y):
+        for i in range(1, len(layer_dims)):
+            w = np.random.randn(layer_dims[i], layer_dims[i - 1]) * 0.01
+            b = np.zeros((layer_dims[i],1))
+            self.weights.append(w)
+            self.bias.append(b)
+        self.act_function = activation_func
+        self.log_level = log
+ 
+    def forward_propogation(self, X):
         """
-        Implement the cost function and its gradient for the propagation explained above
-
-        Arguments:
-        X -- data of size (num_px * num_px * 3, number of examples)
-        Y -- true "label" vector (containing 0 if non-cat, 1 if cat) of size (1, number of examples)
-
-        Return:
-        grads -- dictionary containing the gradients of the weights and bias
-                (dw -- gradient of the loss with respect to w, thus same shape as w)
-                (db -- gradient of the loss with respect to b, thus same shape as b)
-        cost -- negative log-likelihood cost for logistic regression
+            X -- A (len of feature vector, num examples) matrix
+            The neural network should have been initialized with the first layer
+            dimension being the len of the feature vector
+            returns A, a (num examples, 1) array of floats interpreted as the output
         """
-        m = X.shape[1]
+        assert(X.shape[0] == self.weights[0].shape[1])
+        A = X
+        cache = []
+        for i in range(len(self.weights)):
+            if(self.log_level == "debug"): 
+                print("{} shape A {} shape W {} shape b {}".format(i,np.shape(A), np.shape(self.weights[i]), np.shape(self.bias[i])))
+            Z = np.dot(self.weights[i], A) + self.bias[i]
+            if(self.act_function == "sigmoid"):
+                A = math_utils.sigmoid(Z)
+            if(self.act_function == "tanh"):
+                A = math_utils.tanh(Z)
+        if(self.log_level == "debug"):
+            print("{} shape A {}".format(i,np.shape(A)))
+        return A
 
-        if(self.act_function == "sigmoid"):
-            A = math_utils.sigmoid(np.dot((self.weights).T, X) + self.bias)
-        if(self.act_function == "tanh"):
-            A = math_utils.tanh(np.dot((self.weights).T, X) + self.bias)
+    def train(self, training_set, labels):
+        classifications = self.forward_propogation(training_set)
+        cost = self.compute_cost(classifications, labels)
 
-        cost = (-1 / m) * np.sum(Y * np.log(A) + (1 - Y) * np.log(1 - A))
-        
-        # BACKWARD PROPAGATION (TO FIND GRAD)
-        dw = (1 / m) * np.dot(X, (A - Y).T)
-        db = (1 / m) * np.sum(A - Y)
-        cost = np.squeeze(np.array(cost))
-        grads = {"dw": dw,
-                "db": db}
-        
-        return grads, cost
-
-    def train(self, X, Y, num_iterations=100, learning_rate=0.009, print_cost=False):
-        """
-        This function optimizes w and b by running a gradient descent algorithm
-        
-        Arguments:
-        w -- weights, a numpy array of size (num_px * num_px * 3, 1)
-        b -- bias, a scalar
-        X -- data of shape (num_px * num_px * 3, number of examples)
-        Y -- true "label" vector (containing 0 if non-cat, 1 if cat), of shape (1, number of examples)
-        num_iterations -- number of iterations of the optimization loop
-        learning_rate -- learning rate of the gradient descent update rule
-        print_cost -- True to print the loss every 100 steps
-        Returns:
-        params -- dictionary containing the weights w and bias b
-        grads -- dictionary containing the gradients of the weights and bias with respect to the cost function
-        costs -- list of all the costs computed during the optimization, this will be used to plot the learning curve.
-        """
-        costs = []
-        
-        for i in range(num_iterations):
-            # Cost and gradient calculation 
-            grads, cost = self.propagate(X,Y)
-
-            # Retrieve derivatives from grads
-            dw = grads["dw"]
-            db = grads["db"]
-            
-            self.weights = self.weights - learning_rate*(dw)
-            self.bias = self.bias - learning_rate*(db)
-
-            # Record the costs
-            if i % 100 == 0:
-                costs.append(cost)
-                # Print the cost every 100 training iterations
-                if print_cost:
-                    print ("Cost after iteration %i: %f" %(i, cost))
-        grads = {"dw": dw,
-                "db": db}
-        return grads, costs
+    @staticmethod
+    def compute_cost(classifications, labels):
+        m = labels.shape[1]
+        cost = -1/m * np.sum(labels * np.log(classifications) + (1 - labels) * np.log(1 - classifications))    
+        cost = np.squeeze(cost)
+        return cost
 
     def predict(self, X):
         '''
@@ -131,10 +97,7 @@ class Model():
 
 if __name__ == '__main__':
     data = lr_utils.import_data("cats", do_log=True)
-    
-    logistic_regression = Model(activation_func="sigmoid")
-    logistic_regression.init_weights(data.get("Flattened Training Set").shape[0])
-    logistic_regression.train(data.get("Flattened Training Set"), data.get("Training Set Labels"))
-    predictions = logistic_regression.predict(data.get("Flattened Test Set"))
-
-    logistic_regression.score_predictions(predictions, data.get("Test Set Labels"))
+    input_size = data.get("Flattened Training Set").shape[0]
+    nn = FF_NeuralNetwork([input_size, 20, 7, 5, 1], activation_func="sigmoid", log="debug")
+    flattened_Set = data.get("Flattened Training Set")
+    nn.forward_propogation(flattened_Set)

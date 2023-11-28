@@ -8,3 +8,4 @@ def tanh(z):
 
 def column_wise_shuffle(data):
     return(np.random.shuffle(data.T))
+
