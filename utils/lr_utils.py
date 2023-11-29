@@ -61,7 +61,7 @@ def print_data_set_info(ds_name, X_train, Y_train, X_test, Y_test, X_train_flat,
     m_train = X_train.shape[0]
     m_test = X_test.shape[0]
     num_px = X_train.shape[2]
-    print("\n************** LOG **************")
+    print("\n************** DATA LOG **************")
     print("Data Set Name: {}".format(ds_name))
     print ("Number of training examples: " + str(m_train))
     print ("Number of testing examples: " + str(m_test))
@@ -72,5 +72,5 @@ def print_data_set_info(ds_name, X_train, Y_train, X_test, Y_test, X_train_flat,
     print ("Test Labels Shape: " + str(Y_test.shape))                
     print ("Flattened Training Set Shape: " + str(X_train_flat.shape))
     print ("Flattened Test Set Shape: " + str(X_test_flat.shape))
-    print("************** LOG **************\n")
+    print("************** DATA LOG **************\n")
 

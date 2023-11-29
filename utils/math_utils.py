@@ -9,3 +9,37 @@ def tanh(z):
 def column_wise_shuffle(data):
     return(np.random.shuffle(data.T))
 
+def sigmoid_derivative(z):
+    return(sigmoid(z) * (1-sigmoid(z)))
+
+def relu(Z):
+    A = np.maximum(0,Z)
+    assert(A.shape == Z.shape)
+    return A
+
+def relu_backward(dA, Z):
+    dZ = np.array(dA, copy=True) # just converting dz to a correct object.
+    # When z <= 0, you should set dz to 0 as well. 
+    dZ[Z <= 0] = 0
+    assert (dZ.shape == Z.shape)
+    return dZ
+
+def sigmoid_backward(dA, Z):
+    s = 1/(1+np.exp(-Z))
+    dZ = dA * s * (1-s)
+    assert (dZ.shape == Z.shape)
+    return dZ
+
+def sigmoid_gradient(dA, Z):
+    A, Z = sigmoid(Z)
+    dZ = dA * A * (1 - A)
+    return dZ
+
+def tanh_derivative(Z):
+    dZ = (1 - np.square(tanh(Z)))
+    return dZ
+
+def relu_derivative(Z):
+    A = relu(Z)
+    dZ = np.int64(A > 0)
+    return dZ
