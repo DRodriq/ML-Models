@@ -3,12 +3,12 @@ import sys
 import os
 sys.path.insert(1, os.getcwd())
 from utils import lr_utils, math_utils
-import random
+import matplotlib.pyplot as plt
 
 
 class FF_NeuralNetwork():
 
-    def __init__(self, layer_dims, activation_func="sigmoid", log = "standard", learning_rate = 0.001):
+    def __init__(self, layer_dims, activation_func="sigmoid", log = "standard", learning_rate = 0.01):
         self.weights = []
         self.bias = []
         self.pre_acts = []
@@ -44,7 +44,6 @@ class FF_NeuralNetwork():
         if(self.log_level == "debug"):
             print("************** Forward Prop LOG **************")
         assert(X.shape[0] == self.weights[0].shape[1])
-        X = np.reshape(X,(12288,1))
         A = X
         caches = []
         for i in range(len(self.weights)):
@@ -54,9 +53,9 @@ class FF_NeuralNetwork():
                 print("{} shape A {} shape W {} shape b {}".format(i+1,np.shape(A_prev), np.shape(self.weights[i]), np.shape(self.bias[i])))
             Z = np.dot(self.weights[i], A_prev) + self.bias[i]
             A = self.activation(Z)
-            print("{}: A_prev: {}".format(i, A_prev))
-            print("{}: Z: {}".format(i, Z))
-            print("{}: A: {}".format(i, A))
+        #    print("{}: A_prev: {}".format(i, A_prev))
+        #    print("{}: Z: {}".format(i, Z))
+        #    print("{}: A: {}".format(i, A))
             cache = (Z, A_prev, self.weights[i], self.bias[i])
             caches.append(cache)
             if(self.log_level == "debug"):
@@ -85,14 +84,16 @@ class FF_NeuralNetwork():
         return dZ
 
     def train(self, training_set, labels, iterations = 100):
+        costs = []
         for i in range(iterations):
             cache = []
             classifications, cache = self.forward_propogation(training_set)
             gradients = self.backward_propagation(classifications, cache, labels)
             self.update_parameters(gradients)
-            if(self.log_level == "debug"):
-                cost = self.compute_cost(classifications, labels)
-                print("\nCost after {} runs: {}\n".format(i+1,cost))
+            
+            cost = self.compute_cost(classifications, labels)
+            costs.append(cost)
+        return costs
 
     @staticmethod
     def compute_cost(classifications, labels):
@@ -148,14 +149,14 @@ class FF_NeuralNetwork():
         return A
     
     def score_predictions(self, pred, Y):
-        total = len(pred)
+        total = pred.shape[1]
         correct = 0
         print(pred)
         for i in range(total):
             prediction = 0
-            if(pred[i] >= .5):
+            if(pred[0][i] >= .5):
                 prediction = 1
-            if(prediction == Y[i]):
+            if(prediction == Y[0][i]):
                 correct = correct +1
         per_score = correct/total*100
         print("Scored {} out of {}, or {}%".format(correct, total, per_score))
@@ -164,17 +165,20 @@ class FF_NeuralNetwork():
 
 if __name__ == '__main__':
     data = lr_utils.import_data("cats", do_log=True)
+
     input_size = data.get("Flattened Training Set").shape[0]
-    nn = FF_NeuralNetwork([input_size, 20, 7, 7, 5, 1], activation_func="sigmoid", log="debug", learning_rate=.03)
+    nn = FF_NeuralNetwork([input_size, 20, 15, 7, 5, 1], activation_func="sigmoid", log="st", learning_rate=.05)
+
     flattened_Set = data.get("Flattened Training Set")
     labels = data.get("Training Set Labels")
-    #nn.train(flattened_Set, labels, iterations=10)
-    ex = random.randint(0,200)
-    print(np.shape(flattened_Set[:,ex]))
-    A, cache = nn.forward_propogation(flattened_Set[:,0])
-    print(A)
-    print(labels[:,ex])
-    #preds = nn.predict(data.get("Flattened Test Set"))
+
+    costs = nn.train(flattened_Set, labels, iterations=50)
+
+    preds = nn.predict(data.get("Flattened Test Set"))
+    print(preds)
+
+    plt.plot(costs)
+    plt.show()
     #score = nn.score_predictions(preds, data.get("Test Set Labels"))
 
 
