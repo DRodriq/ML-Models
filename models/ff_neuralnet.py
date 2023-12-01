@@ -241,7 +241,7 @@ def run(data_set, do_standardize_data, nn_dims, act_fn, init_type, lrn_rate, tra
     )
 
 if __name__ == '__main__':
-    run("cats", True, [20, 7, 5, 5, 1], "tanh", "scalar", 0.03, 10000)
+    run("cats", True, [5, 5, 1], "tanh", "scalar", 0.03, 3000)
 
 
 
