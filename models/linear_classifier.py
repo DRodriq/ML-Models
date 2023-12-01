@@ -138,3 +138,5 @@ if __name__ == '__main__':
     predictions = linear_classifier.predict(data.get("Flattened Test Set"))
 
     linear_classifier.score_predictions(predictions, data.get("Test Set Labels"))
+
+    print(3050 % 100)
