@@ -142,11 +142,11 @@ class LinearClassifier():
         results_file = results_folder + "logs\\linear_classifier.log"
         costs_file_name = "plots\\lc_costs-" + file_friendly_ts + ".png"
         costs_file = results_folder + costs_file_name
-        plt.plot(costs)
-        plt.title(costs_file_name.replace(".png", ''))
-        plt.xlabel("Iteration")
-        plt.ylabel("Cost")
-        plt.savefig(costs_file)
+        #plt.plot(costs)
+        #plt.title(costs_file_name.replace(".png", ''))
+        #plt.xlabel("Iteration")
+        #plt.ylabel("Cost")
+        #plt.savefig(costs_file)
         f = open(results_file, "a")
         entry_title = "********** {} Run **********\n".format(timestamp)
         nn_params = "Learning Rate: {}\nActivation Function: {}\n".format(
@@ -154,11 +154,11 @@ class LinearClassifier():
         )
         test_run_stats = "Data Set: {}\nIterations {}\nTraining Accuracy: {}\nTest Accuracy: {}\nCost: {}\nExecution Time: {}\nIterations/Sec: {}\n".format(
                 data_set, str(num_iters), str(train_acc), str(test_acc), str(round(costs[-1],2)), str(exec_time), str(round(num_iters/exec_time,2)))
-        other_results_info = "Costs Plot File: {}\n".format(costs_file_name)
+        #other_results_info = "Costs Plot File: {}\n".format(costs_file_name)
         f.write(entry_title)
         f.write(nn_params)
         f.write(test_run_stats)
-        f.write(other_results_info)
+        #f.write(other_results_info)
         f.write("********************************************\n")        
 
 
