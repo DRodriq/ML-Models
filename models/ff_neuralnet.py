@@ -171,7 +171,7 @@ class FF_NeuralNetwork():
         return(hyper_params)
 
     @staticmethod
-    def post_process(data_set, num_iter, hyper_params, train_acc, test_acc, fin_cost, exec_time):
+    def post_process(data_set, num_iter, hyper_params, train_acc, test_acc, costs, exec_time):
         layers_dims = hyper_params.get("Layer Dimensions")
         learning_rate = hyper_params.get("Learning Rate")
         hl_act_fn = hyper_params.get("Hidden Layer Activation Function")
@@ -180,24 +180,35 @@ class FF_NeuralNetwork():
 
         now = datetime.datetime.now()
         timestamp = now.strftime("%m/%d/%Y-%H:%M:%S")
+        file_friendly_ts = now.strftime("%m-%d-%Y-%H_%M-%S")
         proj_dir = os.path.dirname(os.path.realpath(__file__))
-        results_file = proj_dir + "\\..\\logs\\ff_nn.log"
+        results_folder = proj_dir + "\\..\\results\\"
+        results_file = results_folder + "logs\\ff_nn.log"
+        costs_file_name = "plots\\costs-" + file_friendly_ts + ".png"
+        costs_file = results_folder + costs_file_name
+        plt.plot(costs)
+        plt.title(costs_file_name.replace(".png", ''))
+        plt.xlabel("Iteration")
+        plt.ylabel("Cost")
+        plt.savefig(costs_file)
         f = open(results_file, "a")
         entry_title = "********** {} Run **********\n".format(timestamp)
         nn_params = "NN Dimensions: {}\nLearning Rate: {}\nHidden Layer Act Fn: {}\nOutput Layer Act Fn: {}\nWeight Initialization: {}\n".format(
                     str(layers_dims), str(learning_rate), hl_act_fn, output_act_fn, weight_init
         )
         test_run_stats = "Data Set: {}\nIterations {}\nTraining Accuracy: {}\nTest Accuracy: {}\nCost: {}\nExecution Time: {}\nIterations/Sec: {}\n".format(
-                data_set, str(num_iter), str(train_acc), str(test_acc), str(fin_cost), str(exec_time), str(round(num_iter/exec_time,2)))
+                data_set, str(num_iter), str(train_acc), str(test_acc), str(round(costs[-1],2)), str(exec_time), str(round(num_iter/exec_time,2)))
+        other_results_info = "Costs Plot File: {}\n".format(costs_file_name)
         f.write(entry_title)
         f.write(nn_params)
         f.write(test_run_stats)
+        f.write(other_results_info)
         f.write("********************************************\n")
 
 def run(data_set, do_standardize_data, nn_dims, act_fn, init_type, lrn_rate, training_iterations):
     # data settings
     data_set = "cats"
-    data = lr_utils.import_data(data_set, do_log=True)
+    data = lr_utils.import_data(data_set, do_log=False)
 
     X_train = data.get("Flattened Training Set")
     y_train = data.get("Training Set Labels")
@@ -229,13 +240,11 @@ def run(data_set, do_standardize_data, nn_dims, act_fn, init_type, lrn_rate, tra
         data_set, num_iterations, 
         hyper_params, 
         round(training_accuracy,2), round(test_accuracy,2), 
-        round(costs[-1],2), round(execution_time,2)
-        )
-    #plt.plot(costs)
-    #plt.show()
+        costs, round(execution_time,2)
+    )
 
 if __name__ == '__main__':
-    run("cats", True, [5, 5, 1], "relu", "scalar", 0.03, 3000)
+    run("cats", True, [5, 5, 1], "tanh", "scalar", 0.03, 5000)
 
 
 
