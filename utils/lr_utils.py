@@ -47,6 +47,8 @@ def import_data(data_set_name, do_log = False):
     training_set_data, training_set_labels, test_set_data, test_set_labels, classes = load_dataset(data_set_name)
     training_set_flatten = training_set_data.reshape(training_set_data.shape[0], -1).T
     test_set_flatten = test_set_data.reshape(test_set_data.shape[0], -1).T
+    training_set_labels.reshape(-1, 209)
+    test_set_labels.reshape(-1,50)
     if(do_log):
         print_data_set_info(data_set_name, training_set_data, training_set_labels, test_set_data, test_set_labels, training_set_flatten, test_set_flatten)
     

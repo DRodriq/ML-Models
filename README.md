@@ -10,13 +10,16 @@ Each model file contains a main() definition and can be run standalone.
 
 ## Roadmap ##
 
-* Gradient Checking in NN
+* Gradient Checking
+* Batch running of Neural Network with various parameter sets
 * Add support for more activation functions
-* Assertions that variables will match up before computation
 * Unit tests
-* Add feature to shuffle dataset around before each run
-* Add save feature for model parameters, feature to load models from file
+* Dataset Features
+    * Shuffle datasets around before each run, training and tests sets
+    * Synthesize new data examples from existing - rotations, blur, crops
+* Option to save model parameters, load models from file
 * Visualizations, Graphs
+* Front-End / Wrapper UI
 * Interested Models:
     * RNN
     * CNN

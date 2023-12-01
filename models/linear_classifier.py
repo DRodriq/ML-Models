@@ -1,16 +1,20 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 import os
 sys.path.insert(1, os.getcwd())
 from utils import lr_utils, math_utils
+import time
+import datetime
 
 
 class LinearClassifier():
 
-    def __init__(self, activation_func="sigmoid"):
+    def __init__(self, activation_func="sigmoid", learn_rate=0.009):
         self.weights = np.zeros((2,1))
         self.bias = 0.0
         self.act_function = activation_func
+        self.learning_rate = learn_rate
 
     def init_weights(self, data_shape):
         self.weights = np.zeros((data_shape,1))
@@ -35,19 +39,24 @@ class LinearClassifier():
             A = math_utils.sigmoid(np.dot((self.weights).T, X) + self.bias)
         if(self.act_function == "tanh"):
             A = math_utils.tanh(np.dot((self.weights).T, X) + self.bias)
+        cost = self.compute_cost(A,Y)
 
-        cost = (-1 / m) * np.sum(Y * np.log(A) + (1 - Y) * np.log(1 - A))
-        
         # BACKWARD PROPAGATION (TO FIND GRAD)
         dw = (1 / m) * np.dot(X, (A - Y).T)
         db = (1 / m) * np.sum(A - Y)
-        cost = np.squeeze(np.array(cost))
         grads = {"dw": dw,
                 "db": db}
         
         return grads, cost
 
-    def train(self, X, Y, num_iterations=100, learning_rate=0.009, print_cost=False):
+    @staticmethod
+    def compute_cost(AL, y):
+        m = y.shape[1]              
+        cost = - (1 / m) * np.sum(
+            np.multiply(y, np.log(AL)) + np.multiply(1 - y, np.log(1 - AL)))
+        return cost
+
+    def train(self, X, Y, num_iterations=100, print_cost=False):
         """
         This function optimizes w and b by running a gradient descent algorithm
         
@@ -69,23 +78,18 @@ class LinearClassifier():
         for i in range(num_iterations):
             # Cost and gradient calculation 
             grads, cost = self.propagate(X,Y)
-
             # Retrieve derivatives from grads
             dw = grads["dw"]
             db = grads["db"]
             
-            self.weights = self.weights - learning_rate*(dw)
-            self.bias = self.bias - learning_rate*(db)
+            self.weights = self.weights - self.learning_rate*(dw)
+            self.bias = self.bias - self.learning_rate*(db)
 
-            # Record the costs
-            if i % 100 == 0:
-                costs.append(cost)
-                # Print the cost every 100 training iterations
-                if print_cost:
-                    print ("Cost after iteration %i: %f" %(i, cost))
+            costs.append(cost)
+
         grads = {"dw": dw,
                 "db": db}
-        return grads, costs
+        return costs
 
     def predict(self, X):
         '''
@@ -127,16 +131,64 @@ class LinearClassifier():
         per_score = correct/total*100
         print("Scored {} out of {}, or {}%".format(correct, total, per_score))
         return per_score
+    
+    @staticmethod
+    def post_process(costs, act_fn, learning_rate, data_set, num_iters, train_acc, test_acc, exec_time):
+        now = datetime.datetime.now()
+        timestamp = now.strftime("%m/%d/%Y-%H:%M:%S")
+        file_friendly_ts = now.strftime("%m-%d-%Y-%H_%M-%S")
+        proj_dir = os.path.dirname(os.path.realpath(__file__))
+        results_folder = proj_dir + "\\..\\results\\"
+        results_file = results_folder + "logs\\linear_classifier.log"
+        costs_file_name = "plots\\lc_costs-" + file_friendly_ts + ".png"
+        costs_file = results_folder + costs_file_name
+        plt.plot(costs)
+        plt.title(costs_file_name.replace(".png", ''))
+        plt.xlabel("Iteration")
+        plt.ylabel("Cost")
+        plt.savefig(costs_file)
+        f = open(results_file, "a")
+        entry_title = "********** {} Run **********\n".format(timestamp)
+        nn_params = "Learning Rate: {}\nActivation Function: {}\n".format(
+                    str(learning_rate), act_fn
+        )
+        test_run_stats = "Data Set: {}\nIterations {}\nTraining Accuracy: {}\nTest Accuracy: {}\nCost: {}\nExecution Time: {}\nIterations/Sec: {}\n".format(
+                data_set, str(num_iters), str(train_acc), str(test_acc), str(round(costs[-1],2)), str(exec_time), str(round(num_iters/exec_time,2)))
+        other_results_info = "Costs Plot File: {}\n".format(costs_file_name)
+        f.write(entry_title)
+        f.write(nn_params)
+        f.write(test_run_stats)
+        f.write(other_results_info)
+        f.write("********************************************\n")        
 
 
 if __name__ == '__main__':
-    data = lr_utils.import_data("cats", do_log=True)
-    
-    linear_classifier = LinearClassifier(activation_func="sigmoid")
+    data_set = "cats"
+    num_iterations = 1000
+    learning_rate = 0.09
+    data = lr_utils.import_data(data_set, do_log=True)
+
+    X_train = data.get("Flattened Training Set")
+    y_train = data.get("Training Set Labels")
+    X_test = data.get("Flattened Test Set")
+    y_test = data.get("Test Set Labels")
+
+    X_train = X_train / np.amax(X_train)
+    X_test = X_test / np.amax(X_test)
+
+    linear_classifier = LinearClassifier(activation_func="sigmoid", learn_rate=learning_rate)
     linear_classifier.init_weights(data.get("Flattened Training Set").shape[0])
-    linear_classifier.train(data.get("Flattened Training Set"), data.get("Training Set Labels"))
-    predictions = linear_classifier.predict(data.get("Flattened Test Set"))
+    start = time.time()
+    costs = linear_classifier.train(X_train, y_train, num_iterations)
+    execution_time = time.time() - start
+    print("Execution Time: ", execution_time)
 
-    linear_classifier.score_predictions(predictions, data.get("Test Set Labels"))
+    predictions = linear_classifier.predict(X_train)
+    training_set_score = linear_classifier.score_predictions(predictions, y_train)
+    predictions = linear_classifier.predict(X_test)
+    test_set_score = linear_classifier.score_predictions(predictions, y_test)
 
-    print(3050 % 100)
+    linear_classifier.post_process(
+        costs, linear_classifier.act_function, linear_classifier.learning_rate, 
+        data_set, num_iterations, training_set_score, test_set_score, execution_time
+        )

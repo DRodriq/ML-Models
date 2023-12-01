@@ -184,7 +184,7 @@ class FF_NeuralNetwork():
         proj_dir = os.path.dirname(os.path.realpath(__file__))
         results_folder = proj_dir + "\\..\\results\\"
         results_file = results_folder + "logs\\ff_nn.log"
-        costs_file_name = "plots\\costs-" + file_friendly_ts + ".png"
+        costs_file_name = "plots\\nn_costs-" + file_friendly_ts + ".png"
         costs_file = results_folder + costs_file_name
         plt.plot(costs)
         plt.title(costs_file_name.replace(".png", ''))
@@ -219,9 +219,6 @@ def run(data_set, do_standardize_data, nn_dims, act_fn, init_type, lrn_rate, tra
     nn_dimensions = [X_train.shape[0]] + nn_dims
     num_iterations = training_iterations
 
-    y_train = y_train.reshape(-1, 209)
-    y_test = y_test.reshape(-1, 50)
-
     if(do_standardize_data):
         X_train = X_train / np.amax(X_train)
         X_test = X_test / np.amax(X_test)
@@ -244,7 +241,7 @@ def run(data_set, do_standardize_data, nn_dims, act_fn, init_type, lrn_rate, tra
     )
 
 if __name__ == '__main__':
-    run("cats", True, [5, 5, 1], "tanh", "scalar", 0.03, 5000)
+    run("cats", True, [20, 7, 5, 5, 1], "tanh", "scalar", 0.03, 10000)
 
 
 
