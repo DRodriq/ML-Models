@@ -1,0 +1,15 @@
+********** 11/30/2023-23:21:40 Run **********
+NN Dimensions: [12288, 5, 5, 1]
+Learning Rate: 0.03
+Hidden Layer Act Fn: tanh
+Output Layer Act Fn: sigmoid
+Weight Initialization: scalar
+Data Set: cats
+Iterations 3000
+Training Accuracy: 99.52
+Test Accuracy: 68.0
+Cost: 0.03
+Execution Time: 43.76
+Iterations/Sec: 68.56
+Costs Plot File: plots\nn_costs-11-30-2023-23_21-40.png
+********************************************
