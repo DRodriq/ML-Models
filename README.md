@@ -4,7 +4,7 @@ This repo hosts my implementations of various machine models. Current models inc
 * Linear Classifier trained with backpropogation as taught in Andrew Ng's Deep Learning course
 * L-Layer Feed Forward Neural Network as taught in Andrew Ng's Deep Learning course
 
-Models can be run standalone with default parameters or through an application
+Models can be run standalone with default parameters or through the application. Run gui.py
 
 ## Testing ##
 
