@@ -3,10 +3,9 @@ import matplotlib.pyplot as plt
 import sys
 import os
 sys.path.insert(1, os.getcwd())
-from utils import lr_utils, math_utils
+from utils import sys_utils, math_utils
 import time
 import datetime
-
 
 class LinearClassifier():
 
@@ -16,10 +15,10 @@ class LinearClassifier():
         self.act_function = activation_func
         self.learning_rate = learn_rate
 
-    def init_weights(self, data_shape):
+    def init_parameters(self, data_shape):
         self.weights = np.zeros((data_shape,1))
 
-    def propagate(self, X, Y):
+    def forward_propogation(self, X, Y):
         """
         Implement the cost function and its gradient for the propagation explained above
 
@@ -166,7 +165,7 @@ if __name__ == '__main__':
     data_set = "cats"
     num_iterations = 1000
     learning_rate = 0.09
-    data = lr_utils.import_data(data_set, do_log=True)
+    data = sys_utils.import_data(data_set, do_log=True)
 
     X_train = data.get("Flattened Training Set")
     y_train = data.get("Training Set Labels")

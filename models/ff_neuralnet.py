@@ -3,12 +3,13 @@ import numpy as np
 import sys
 import os
 sys.path.insert(1, os.getcwd())
-from utils import lr_utils, math_utils
+from utils import sys_utils, math_utils
 import time
 import datetime
+from queue import Queue
 
 class FF_NeuralNetwork():
-    def __init__(self, layers_dims, hidden_activation_func="sigmoid", output_activation_func="sigmoid", learning_rate=0.01, init_type="scalar", log ="standard"):             
+    def __init__(self, layers_dims, hidden_activation_func="tanh", output_activation_func="sigmoid", learning_rate=0.01, init_type="scalar", log ="none"):             
         self.parameters = {}
         self.layer_dims = layers_dims
         self.hidden_activation_fn = hidden_activation_func
@@ -16,14 +17,16 @@ class FF_NeuralNetwork():
         self.learning_rate = learning_rate
         self.init_type = init_type
         self.log_level = log
-        #np.random.seed(1)  
+        self.init_parameters(layers_dims)
+
+    def init_parameters(self, layers_dims):
         L = len(layers_dims)            
         for l in range(1, L):   
             self.parameters["W" + str(l)] = self.weight_init(layers_dims[l], layers_dims[l - 1]) 
             self.parameters["b" + str(l)] = np.zeros((layers_dims[l], 1))
             assert self.parameters["W" + str(l)].shape == (
                 layers_dims[l], layers_dims[l - 1])
-            assert self.parameters["b" + str(l)].shape == (layers_dims[l], 1)
+            assert self.parameters["b" + str(l)].shape == (layers_dims[l], 1)   
 
     def weight_init(self, dim1, dim2):
         if(self.init_type == "scalar"):
@@ -129,28 +132,22 @@ class FF_NeuralNetwork():
         return grads
 
     # Define the multi-layer model using all the helper functions we wrote before
-    def train(self, X, Y, num_iterations=3000):
+    def train(self, X, Y, num_iterations=3000, q=None):
         costs = []
-        if(self.log_level == "none"):
-            progress_steps = (num_iterations - (num_iterations % 50)) / 50
-            percent_finished = 0
-            print("Training. Please wait...")
-            print("[",end='', flush=True)
+        progress_steps = (num_iterations - (num_iterations % 50)) / 50
+        percent_finished = 0
         for i in range(num_iterations):
             AL, caches = self.forward_propogation(X)
             cost = self.compute_cost(AL, Y)
             grads = self.backpropogation(AL, Y, caches)
             self.update_parameters(grads)
             costs.append(cost)
-            if(self.log_level == "standard" or self.log_level == "debug"):
-                if (i + 1) % 100 == 0:
-                    print(f"The cost after {i + 1} iterations is: {cost:.4f}")
-            else:
+            if(q is not None):
                 if(i > (progress_steps*percent_finished)):
-                    print("*",end='',flush=True)
                     percent_finished = percent_finished + 1
-        if(self.log_level == "none"):
-            print("]")
+                    q.put(percent_finished, cost)
+            if(self.log_level == "standard" and i%100 == 0):
+                print("Cost after {} iterations: {}".format(i, cost))
         return costs
 
     def test_model(self, X_test, Y):
@@ -163,6 +160,7 @@ class FF_NeuralNetwork():
     
     def get_hyperparameters(self):
         hyper_params = {}
+        hyper_params.update({"Model Type": "Feed Forward Neural Network"})
         hyper_params.update({"Layer Dimensions": str(self.layer_dims)})
         hyper_params.update({"Hidden Layer Activation Function": str(self.hidden_activation_fn)})
         hyper_params.update({"Output Layer Activation Function": str(self.output_activation_fn)})
@@ -208,7 +206,9 @@ class FF_NeuralNetwork():
 def run(data_set, do_standardize_data, nn_dims, act_fn, init_type, lrn_rate, training_iterations):
     # data settings
     data_set = "cats"
-    data = lr_utils.import_data(data_set, do_log=False)
+    data = sys_utils.import_data(data_set)
+    #info = sys_utils.format_ds_info(data_set)
+    #print(info)
 
     X_train = data.get("Flattened Training Set")
     y_train = data.get("Training Set Labels")
@@ -223,7 +223,7 @@ def run(data_set, do_standardize_data, nn_dims, act_fn, init_type, lrn_rate, tra
         X_train = X_train / np.amax(X_train)
         X_test = X_test / np.amax(X_test)
 
-    nn = FF_NeuralNetwork(nn_dimensions, hidden_activation_func=act_fn, init_type=init_type, learning_rate=lrn_rate, log="none")
+    nn = FF_NeuralNetwork(nn_dimensions, hidden_activation_func=act_fn, init_type=init_type, learning_rate=lrn_rate, log="standard")
     start = time.time()
     costs = nn.train(X_train, y_train, num_iterations)
     execution_time = time.time() - start
