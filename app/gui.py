@@ -1,6 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QVBoxLayout, QGridLayout, QPushButton, QTextEdit, QProgressBar, QComboBox, QTabWidget, QTabBar
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import datetime
 from PyQt5.QtCore import Qt, QThread
@@ -41,7 +42,7 @@ class ModelTesterApp(QWidget):
         layout.addWidget(section1_label, current_row, 0, 1, 6)
         current_row = current_row + 1
 
-        data_labels = ['Train/Dev/Test %:']
+        data_labels = ['Batch Size:']
         self.data_input_fields = [QLineEdit(self) for _ in range(len(data_labels))]
 
     # data status window
@@ -93,18 +94,19 @@ class ModelTesterApp(QWidget):
 
     # model labels
         model_labels = ["Layer Dimensions:", 'Learning Rate:', 'Hidden Layer Activation', 
-                        'Output Activation', 'Weight Initialization Type', 'Learning Type:']
+                        'Output Activation', 'Weight Initialization Type', 'Training Iterations:']
         self.model_input_fields = [QLineEdit(self) for _ in range(len(model_labels))]
-
-    # Add space for plots
-        #self.plot_widget = PlotWidget(self)
-        #layout.addWidget(self.plot_widget, current_row, 3,len(model_labels)+2,3)
 
     # Add model status window
         self.model_status_window = QTextEdit(self)
         self.model_status_window.setReadOnly(True)  # Make it read-only
         self.model_status_window.setStyleSheet('font-size: 14px; color: white;')
-        layout.addWidget(self.model_status_window, current_row, 2, len(model_labels), 2)
+        layout.addWidget(self.model_status_window, current_row, 2, len(model_labels)+1, 2)
+
+    # Add space for plots
+        self.cost_figure = Figure()
+        self.canvas = FigureCanvas(self.cost_figure)
+        layout.addWidget(self.canvas, current_row, 4,len(model_labels)+2,3)
 
     # Add a dropdown selector for models
         model_selector_label = QLabel('Select Model Type:', self)
@@ -185,14 +187,20 @@ class ModelTesterApp(QWidget):
 
     # Set window properties with a larger default size
         self.setGeometry(0, 0, 1800, 900)  # Adjusted size with space for plots
-        self.setWindowTitle('Qt Application with Input Fields and Plots')
+        self.setWindowTitle('Model Tester App')
 
     # Show the window
         self.show()
 
     def load_dataset_button_click(self):
         ds_name = self.dataset_selector.currentText()
-        loaded, msg = self.driver.load_dataset(ds_name, self.current_frame)
+        num_batches_input = self.data_input_fields[0].text()
+        if(num_batches_input ==""):
+            num_batches = 1
+            self.log("No batch number provided. Defaulting to 1", "DATA")
+        else:
+            num_batches = int(num_batches_input)
+        loaded, msg = self.driver.load_dataset(ds_name, num_batches, self.current_frame)
         if(loaded):
             self.write_to_data_status_window(msg)
             self.log("Loaded Dataset: {}. See dataset info".format(ds_name), "DATA")
@@ -232,8 +240,10 @@ class ModelTesterApp(QWidget):
                 output_fn = self.model_input_fields[3].text()
             if(self.model_input_fields[4].text() != ""):
                 init_type = self.model_input_fields[4].text()
+            if(self.model_input_fields[5].text() != ""):
+                iters = int(self.model_input_fields[5].text())
             #(self,model_type, layer_dims, frame, lrn_rate=.03, hidden_fn="tanh", output_fn="sigmoid", init_type="scalar"):
-            success, msg = self.driver.initialize_model(ml_type, layer_dims, self.current_frame, lrn_rate, hidden_fn, output_fn, init_type)
+            success, msg = self.driver.initialize_model(ml_type, layer_dims, self.current_frame, lrn_rate, hidden_fn, output_fn, init_type, iters)
             if(success):
                 self.initialize_model_button.setText("Train Model")
                 self.write_to_model_status_window(msg)
@@ -246,7 +256,8 @@ class ModelTesterApp(QWidget):
         self.initialize_model_button.setText("Initialize Model")
 
     def train_model_button_click(self):
-        self.driver.train_model(self.current_frame)
+        msg = self.driver.train_model(self.current_frame)
+        self.plot_cost(msg)
 
     def log(self, message, tag="DEFAULT"):
         # Function to log messages to the QTextEdit
@@ -314,20 +325,12 @@ class ModelTesterApp(QWidget):
 
     def model_selector_changed(self):
         pass
-    
-class PlotWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
 
-        self.initUI()
-
-    def initUI(self):
-        # Create a FigureCanvas for displaying plots
-        self.canvas = FigureCanvas(plt.Figure())
-        layout = QVBoxLayout()
-        layout.addWidget(self.canvas)
-
-        self.setLayout(layout)
+    def plot_cost(self, data):
+        ax = self.cost_figure.add_subplot(111)
+        ax.set_title("Cost Values")
+        ax.plot(data, 'b-')
+        self.canvas.draw()       
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -31,7 +31,7 @@ def load_dataset(ds_name):
     file_dir = "datasets/{}".format(ds_name)
     train_file = "{}/train_{}.h5".format(file_dir, ds_name)
     test_file = "{}/test_{}.h5".format(file_dir, ds_name)
-    #if(ds_name.count("cats")):
+
     train_dataset = h5py.File(train_file, "r")
     train_set_x_orig = np.array(train_dataset["train_set_x"][:]) # your train set features
     train_set_y_orig = np.array(train_dataset["train_set_y"][:]) # your train set labels
@@ -44,7 +44,7 @@ def load_dataset(ds_name):
 
     train_set_y_orig = train_set_y_orig.reshape((1, train_set_y_orig.shape[0]))
     test_set_y_orig = test_set_y_orig.reshape((1, test_set_y_orig.shape[0]))
-    
+
     return train_set_x_orig, train_set_y_orig, test_set_x_orig, test_set_y_orig, classes
 
 def load_planar_dataset():
@@ -68,17 +68,24 @@ def load_planar_dataset():
 
     return X, Y
 
-def import_data(data_set_name):
+def import_data(data_set_name, batches=1):
     training_set_data, training_set_labels, test_set_data, test_set_labels, classes = load_dataset(data_set_name)
+
     training_set_flatten = training_set_data.reshape(training_set_data.shape[0], -1).T
     test_set_flatten = test_set_data.reshape(test_set_data.shape[0], -1).T
-    training_set_labels.reshape(-1, training_set_data.shape[0]) #
-    test_set_labels.reshape(-1,test_set_data.shape[0]) #
-    #ds_info = get_dataset_info(data_set_name, training_set_data, training_set_labels, test_set_data, test_set_labels, training_set_flatten, test_set_flatten)
+    training_set_labels.reshape(-1, training_set_data.shape[0]) 
+    test_set_labels.reshape(-1,test_set_data.shape[0]) 
+
+    training_set_flatten = training_set_flatten / np.amax(training_set_flatten)
+    test_set_flatten = test_set_flatten / np.amax(test_set_flatten)
     
+    X_train_batched = batch(training_set_flatten, batches)
+    y_train_batched = batch(training_set_labels, batches)
+
     data_dict = {}
-    data = [data_set_name, training_set_data, training_set_labels, test_set_data, test_set_labels, training_set_flatten, test_set_flatten]
-    keys = ["Dataset Name", "Training Set Data", "Training Set Labels", "Test Set Data", "Test Set Labels", "Flattened Training Set", "Flattened Test Set"]
+    data = [data_set_name, training_set_data, training_set_labels, test_set_data, test_set_labels, training_set_flatten, test_set_flatten, X_train_batched, y_train_batched]
+    keys = ["Dataset Name", "Training Set Data", "Training Set Labels", "Test Set Data", 
+            "Test Set Labels", "Flattened Training Set", "Flattened Test Set", "Batched Training Set", "Batched Training Labels"]
     for i in range(len(data)):
         data_dict.update({keys[i]:data[i]})
 
@@ -90,8 +97,8 @@ def format_ds_info(data_dict):
     num_px = data_dict.get("Training Set Data").shape[2]
     ds_info = (
                 "Dataset Name: {}\n".format(data_dict.get("Dataset Name")) + 
-                "Number of examples: " + str(m_train) + "\n" +
-                "Number of testing examples: " + str(m_test) + "\n" + 
+                "Training Set Size: " + str(m_train) + "\n" +
+                "Test Set Size: " + str(m_test) + "\n" + 
                 "Each item is of size: (" + str(num_px) + ", " + str(num_px) + ", 3)" + "\n" + 
                 "Training Set Shape: " + str(data_dict.get("Training Set Data").shape)  + "\n" + 
                 "Training Label Shape: " + str(data_dict.get("Training Set Labels").shape) + "\n" + 
@@ -99,6 +106,39 @@ def format_ds_info(data_dict):
                 "Test Labels Shape: " + str(data_dict.get("Test Set Labels").shape) + "\n" + 
                 "Flattened Training Set Shape: " + str(data_dict.get("Flattened Training Set").shape) + "\n" + 
                 "Flattened Test Set Shape: " + str(data_dict.get("Flattened Test Set").shape) + "\n"
+                "Number of Batches: " + str(len(data_dict.get("Batched Training Set"))) + "\n" + 
+                "Batch Size: " + str(data_dict.get("Batched Training Set")[0].shape[1]) + "\n"
+                "Batched Training Set Size: " + str(data_dict.get("Batched Training Set")[0].shape)
         )   
 
     return ds_info
+
+def batch(X, n):
+    """
+    Split the dataset X into n batches.
+    Parameters:
+    - X: NumPy array, shape (features, samples)
+    - n_batches: Number of batches
+
+    Returns:
+    - List of batches, where each batch is a NumPy array
+    """
+    samples_per_batch = X.shape[1] // n
+    # Reshape the array to have the samples in the first dimension
+    X = X.T
+    batches = [X[i * samples_per_batch : (i + 1) * samples_per_batch, :].T for i in range(n - 1)]
+    # The last batch might have a different size if the total number of samples is not divisible by n_batches
+    batches.append(X[(n - 1) * samples_per_batch :, :].T)
+    #for i in range(len(batches)):
+    #    np.reshape(batches, (batches[i].shape[0], 1))
+    return batches
+
+if __name__ == '__main__':
+    data = import_data("cats", 3)
+    print(get_available_datasets())
+    print(get_available_models())
+
+    for key in data.keys():
+        print("Key: {}".format(key))
+
+    data_info = print(format_ds_info(data))

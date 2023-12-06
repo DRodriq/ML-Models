@@ -18,11 +18,11 @@ class Driver():
         self.model_frames.append(ModelFrame())
         self.q = Queue()
 
-    def load_dataset(self, ds_name, frame):
+    def load_dataset(self, ds_name, num_batches, frame):
         did_load = False
         msg = ""
         if(sys_utils.check_dataset_existence(ds_name)):
-            data = sys_utils.import_data(ds_name)
+            data = sys_utils.import_data(ds_name, num_batches)
             if(self.model_frames[frame].ds_isloaded() == ds_name):
                 msg = "Dataset '{}' already loaded in frame {}".format(ds_name, str(frame))
             else:
@@ -43,11 +43,11 @@ class Driver():
     def initialize_model(self, 
                          model_type, layer_dims, frame, lrn_rate=.03, 
                          hidden_fn="tanh", output_fn="sigmoid", 
-                         init_type="scalar"):
+                         init_type="scalar", iters=3000):
         loaded = False
         if(model_type in sys_utils.get_available_models()):
-            self.model_frames[frame].init_model(model_type, layer_dims,lrn_rate, 
-                         hidden_fn, output_fn, init_type)
+            self.model_frames[frame].init_model(model_type, layer_dims, 
+                         hidden_fn, output_fn, lrn_rate, init_type, iters)
             loaded = True
             msg = self.model_frames[frame].get_model_info()
         else:
@@ -82,6 +82,7 @@ class ModelFrame():
     def __init__(self):
         self.model = ""
         self.dataset = ""
+        self.training_iters = 3000
 
     def add_ds(self, ds):
         self.dataset = ds
@@ -101,7 +102,8 @@ class ModelFrame():
             return(sys_utils.format_ds_info(self.dataset))
         
 #def __init__(self, layers_dims, hidden_activation_func="sigmoid", output_activation_func="sigmoid", learning_rate=0.01, init_type="scalar", log ="none"):       
-    def init_model(self, model_type, layer_dims, hidden_fn, output_fn, lrn_r8, init_type):
+    def init_model(self, model_type, layer_dims, hidden_fn, output_fn, lrn_r8, init_type, iters):
+        self.training_iters = iters
         if(model_type == "ff_neuralnet"):
             self.model = ff_neuralnet.FF_NeuralNetwork(layer_dims, hidden_fn, output_fn, lrn_r8, init_type)
         elif(model_type == "linear_classifier"):
@@ -117,7 +119,7 @@ class ModelFrame():
         self.model = ""
 
     def train(self):
-        costs = self.model.train(self.dataset.get("Flattened Training Set"), self.dataset.get("Training Set Labels"), 3000)
+        costs = self.model.train(self.dataset.get("Batched Training Set"), self.dataset.get("Batched Training Labels"), self.training_iters)
         return costs
 
     def get_model_info(self):

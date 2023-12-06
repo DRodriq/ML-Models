@@ -137,10 +137,11 @@ class FF_NeuralNetwork():
         progress_steps = (num_iterations - (num_iterations % 50)) / 50
         percent_finished = 0
         for i in range(num_iterations):
-            AL, caches = self.forward_propogation(X)
-            cost = self.compute_cost(AL, Y)
-            grads = self.backpropogation(AL, Y, caches)
-            self.update_parameters(grads)
+            for batch_num in range(len(X)):
+                AL, caches = self.forward_propogation(X[batch_num])
+                grads = self.backpropogation(AL, Y[batch_num], caches)
+                cost = self.compute_cost(AL, Y[batch_num])
+                self.update_parameters(grads)
             costs.append(cost)
             if(q is not None):
                 if(i > (progress_steps*percent_finished)):
@@ -169,7 +170,7 @@ class FF_NeuralNetwork():
         return(hyper_params)
 
     @staticmethod
-    def post_process(data_set, num_iter, hyper_params, train_acc, test_acc, costs, exec_time):
+    def post_process(data_set, num_iter, ds_size, mb_size, hyper_params, train_acc, test_acc, costs, exec_time):
         layers_dims = hyper_params.get("Layer Dimensions")
         learning_rate = hyper_params.get("Learning Rate")
         hl_act_fn = hyper_params.get("Hidden Layer Activation Function")
@@ -194,8 +195,8 @@ class FF_NeuralNetwork():
         nn_params = "NN Dimensions: {}\nLearning Rate: {}\nHidden Layer Act Fn: {}\nOutput Layer Act Fn: {}\nWeight Initialization: {}\n".format(
                     str(layers_dims), str(learning_rate), hl_act_fn, output_act_fn, weight_init
         )
-        test_run_stats = "Data Set: {}\nIterations {}\nTraining Accuracy: {}\nTest Accuracy: {}\nCost: {}\nExecution Time: {}\nIterations/Sec: {}\n".format(
-                data_set, str(num_iter), str(train_acc), str(test_acc), str(round(costs[-1],2)), str(exec_time), str(round(num_iter/exec_time,2)))
+        test_run_stats = "Data Set: {}\nIterations {}\nDataset Size: {}\nMiniBatch Size: {}\nTraining Accuracy: {}\nTest Accuracy: {}\nCost: {}\nExecution Time: {}\nIterations/Sec: {}\n".format(
+                data_set, str(num_iter), str(ds_size), str(mb_size), str(train_acc), str(test_acc), str(round(costs[-1],2)), str(exec_time), str(round(num_iter/exec_time,2)))
         other_results_info = "Costs Plot File: {}\n".format(costs_file_name)
         f.write(entry_title)
         f.write(nn_params)
@@ -203,29 +204,27 @@ class FF_NeuralNetwork():
         f.write(other_results_info)
         f.write("********************************************\n")
 
-def run(data_set, do_standardize_data, nn_dims, act_fn, init_type, lrn_rate, training_iterations):
+def run(data_set, nn_dims, act_fn, init_type, lrn_rate, training_iterations, batches=1):
     # data settings
     data_set = "cats"
-    data = sys_utils.import_data(data_set)
+    data = sys_utils.import_data(data_set, batches)
     #info = sys_utils.format_ds_info(data_set)
     #print(info)
 
     X_train = data.get("Flattened Training Set")
+    X_train_batched = data.get("Batched Training Set")
     y_train = data.get("Training Set Labels")
+    y_train_batched = data.get("Batched Training Labels")
     X_test = data.get("Flattened Test Set")
     y_test = data.get("Test Set Labels")
 
     # Setting hypers and test run params
-    nn_dimensions = [X_train.shape[0]] + nn_dims
+    nn_dimensions = [X_train_batched[0].shape[0]] + nn_dims
     num_iterations = training_iterations
-
-    if(do_standardize_data):
-        X_train = X_train / np.amax(X_train)
-        X_test = X_test / np.amax(X_test)
 
     nn = FF_NeuralNetwork(nn_dimensions, hidden_activation_func=act_fn, init_type=init_type, learning_rate=lrn_rate, log="standard")
     start = time.time()
-    costs = nn.train(X_train, y_train, num_iterations)
+    costs = nn.train(X_train_batched, y_train_batched, num_iterations)
     execution_time = time.time() - start
     print("Execution Time: ", execution_time)
 
@@ -233,15 +232,16 @@ def run(data_set, do_standardize_data, nn_dims, act_fn, init_type, lrn_rate, tra
     test_accuracy = nn.test_model(X_test, y_test)
 
     hyper_params = nn.get_hyperparameters()
+    mini_batch_size = X_train_batched[0].shape[1]
+    ds_size = X_train.shape[0]
     nn.post_process(
-        data_set, num_iterations, 
-        hyper_params, 
-        round(training_accuracy,2), round(test_accuracy,2), 
+        data_set, num_iterations, ds_size, mini_batch_size,
+        hyper_params, round(training_accuracy,2), round(test_accuracy,2), 
         costs, round(execution_time,2)
     )
 
 if __name__ == '__main__':
-    run("cats", True, [5, 5, 1], "tanh", "scalar", 0.03, 3000)
+    run("cats", [7, 5, 5, 1], "tanh", "xavier", 0.03, 5000, 5)
 
 
 
