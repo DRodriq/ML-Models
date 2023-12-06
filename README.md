@@ -4,6 +4,8 @@ This repo hosts my implementations of various machine models. Current models inc
 * Linear Classifier trained with backpropogation as taught in Andrew Ng's Deep Learning course
 * L-Layer Feed Forward Neural Network as taught in Andrew Ng's Deep Learning course
 
+Models can be run standalone with default parameters or through an application
+
 ## Testing ##
 
 Each model file contains a main() definition and can be run standalone. 
@@ -12,11 +14,15 @@ Each model file contains a main() definition and can be run standalone.
 
 * Adding application front end
     * Driver  
-        * Will control models / threads and batch runs
-        * Will be where model parameters are specified and run data is collected, processed
-        * Recieve user inputs from GUI, update GUI with data from models running
+        * Refactor to be a QT worker
+        * Get progress updates from commands
+        * Expand model_frame class to hold state information, clean up interface
     * GUI
-        * QT window application to set parameters, visualize results
+        * Hide implementations for processing input fields for parameters
+        * Create worker threads to dispatch commands
+    * Generally define and clean up interfaces
+    * Solidify responsibility for state data
+    * Add tab for loading a trained model and testing it on a test set
 * Gradient Checking
 * Gradient descent with momentum, RMSProp, ADAM implementations
 * Batch running models with parallelization, result analysis
@@ -34,7 +40,6 @@ Each model file contains a main() definition and can be run standalone.
     * Synthesize new data examples from existing - rotations, blur, crops
     * Scale, standardize, analyze mean and variance
 * Option to save model parameters, load models from file
-* Visualizations, Graphs
 * Interested Models:
     * RNN
     * CNN
