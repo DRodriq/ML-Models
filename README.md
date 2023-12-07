@@ -44,3 +44,11 @@ There is also an application which can be used by running /app/gui.py
     * Reservoir computing, NVAR
     * GANs
     * ...
+
+## Application UI ##
+Main tab with default values
+![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/proj_pic1.png)
+Main tab with loaded dataset and model
+![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/proj_pic2.png)
+Live cost plot
+![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/proj_pic3.png)
