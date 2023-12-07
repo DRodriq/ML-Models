@@ -1,57 +1,138 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QVBoxLayout, QGridLayout, QPushButton, QTextEdit, QProgressBar, QComboBox, QTabWidget, QTabBar
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QVBoxLayout, QGridLayout, QPushButton, QTextEdit, QProgressBar, QComboBox, QTabWidget
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT
+import pyqtgraph
 import datetime
-from PyQt5.QtCore import Qt, QThread
+from PyQt5.QtCore import Qt
 import os
 import driver
 from utils import sys_utils
+from config import UI_CONFIG
 
-class ModelTesterApp(QWidget):
+class ModelTesterUI(QWidget):
     def __init__(self):
         super().__init__()
+
         self.driver = driver.Driver()
+
+        self.setGeometry(UI_CONFIG.STRT, UI_CONFIG.END, UI_CONFIG.LEN, UI_CONFIG.WID)
+        self.setWindowTitle(UI_CONFIG.APP_TITLE)
+        self.session_name = "Session-{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+
         self.num_frames = (len(self.driver.model_frames))
         self.current_frame = 0
-        self.worker_thread = QThread()
+        self.log_buffer = []
+
         self.initUI()
 
     def initUI(self):
-    # Create layout
-        current_row = 1
-        now = datetime.datetime.now()
-        self.session_name = "Session-{}".format(now.strftime("%Y-%m-%d_%H-%M-%S"))
-        self.log_buffer = []
         layout = QGridLayout(self)
-        # Set dark mode background
         self.setStyleSheet('background-color: #2E2E2E; color: white;')
 
-    # Create heading/title area
+        self.tabs = QTabWidget(self)
+        self.tabs.setStyleSheet('background-color: #2E2E2E; color: #2E2E2E;')
+        tab_1 = QWidget()
+        tab_2 = QWidget()
+        self.tabs.addTab(tab_1, "Training Tab")
+        self.tabs.addTab(tab_2, "Dev Tab")
+
+        self.init_tab1(tab_1)
+        self.init_tab2(tab_2)
+
+        layout.addWidget(self.tabs)
+        self.setLayout(layout)
+
+        self.show()
+
+    def init_tab1(self, tab_widget):
+        current_row = 0
+        layout = QGridLayout(tab_widget)
+        current_row, layout = self.set_title_section(layout, current_row)
+        current_row, layout = self.set_dataentry_section(layout, current_row)
+        current_row, layout = self.set_model_parameters_section(layout, current_row)
+        current_row, layout = self.set_logger_section(layout, current_row)
+        current_row, layout = self.set_frame_buttons_section(layout, current_row)
+
+        tab_widget.setLayout(layout)
+
+    def init_tab2(self, tab_widget):
+        layout = QGridLayout(tab_widget)
+        current_row = 0
+        current_row, layout = self.set_title_section(layout, current_row)
+
+        self.cost_plot = pyqtgraph.PlotWidget()
+        layout.addWidget(self.cost_plot, current_row, 0, 3, 3)
+        pen = pyqtgraph.mkPen(color=(255, 255, 255), width=3, size="20pt")
+        self.cost_data_buffer = []
+        self.cost_plot.setTitle("Cost", color = "w")
+        self.cost_plot.setLabel("left", "Cost")
+        self.cost_plot.setLabel("bottom", "Training Iteration")
+        self.cost_plot.showGrid(x=True, y=True)
+        self.cost_plot.setXRange(0, 200)
+        self.cost_plot.plotItem.setMouseEnabled(x=False)
+
+        self.second_plot = pyqtgraph.PlotWidget()
+        layout.addWidget(self.second_plot, current_row, 3, 3, 3)
+        #pen = pyqtgraph.mkPen(color=(255, 255, 255), width=3, size="20pt")
+        #self.cost_data_buffer = []
+        self.second_plot.setTitle("Learn Rate", color = "w")
+        self.second_plot.setLabel("left", "Cost")
+        self.second_plot.setLabel("bottom", "Training Iteration")
+        self.second_plot.showGrid(x=True, y=True)
+        self.second_plot.setYRange(-1, 10)
+        self.second_plot.plotItem.setMouseEnabled(y=False)
+
+        self.third_plot = pyqtgraph.PlotWidget()
+        layout.addWidget(self.third_plot, current_row+3, 0, 3, 3)
+        #pen = pyqtgraph.mkPen(color=(255, 255, 255), width=3, size="20pt")
+        #self.cost_data_buffer = []
+        self.third_plot.setTitle("Cost", color = "w")
+        self.third_plot.setLabel("left", "Cost")
+        self.third_plot.setLabel("bottom", "Training Iteration")
+        self.third_plot.showGrid(x=True, y=True)
+        self.third_plot.setYRange(-1, 10)
+        self.third_plot.plotItem.setMouseEnabled(y=False)
+
+        self.fourth_plot = pyqtgraph.PlotWidget()
+        layout.addWidget(self.fourth_plot, current_row+3, 3, 3, 3)
+        #pen = pyqtgraph.mkPen(color=(255, 255, 255), width=3, size="20pt")
+        #self.cost_data_buffer = []
+        self.fourth_plot.setTitle("Cost", color = "w")
+        self.fourth_plot.setLabel("left", "Cost")
+        self.fourth_plot.setLabel("bottom", "Training Iteration")
+        self.fourth_plot.showGrid(x=True, y=True)
+        self.fourth_plot.setYRange(-1, 10)
+        self.fourth_plot.plotItem.setMouseEnabled(y=False)
+
+        tab_widget.setLayout(layout)
+
+    def update_plot(self, cost):
+        self.cost_data_buffer.append(cost)
+        self.cost_plot.plot(self.cost_data_buffer)
+
+    def set_title_section(self, layout, current_row):
         title_label = QLabel('ML Model Tester', self)
         title_label.setStyleSheet('font-size: 36px; font-weight: bold; color: white;')
-        layout.addWidget(title_label, current_row, 0, 2, 6)
-        current_row = current_row + 2
+        layout.addWidget(title_label, current_row, 0, 1, 6)
+        current_row = current_row + 1
+        return(current_row, layout)
 
-        """
-    # Section 1: Dataset
-        """
+    def set_dataentry_section(self, layout, current_row):
         section1_label = QLabel('Dataset Selections', self)
         section1_label.setStyleSheet('font-size: 20px; font-weight: bold; color: white;')
-        layout.addWidget(section1_label, current_row, 0, 1, 6)
+        layout.addWidget(section1_label, current_row, 0, 0, 6)
         current_row = current_row + 1
+        self.data_labels = ['Number of MiniBatches:']
+        default_values = [1]
+        self.data_input_fields = [QLineEdit(self) for _ in range(len(self.data_labels))]
 
-        data_labels = ['Batch Size:']
-        self.data_input_fields = [QLineEdit(self) for _ in range(len(data_labels))]
-
-    # data status window
+        # data status window
         self.dataset_status_window = QTextEdit(self)
         self.dataset_status_window.setReadOnly(True)  # Make it read-only
         self.dataset_status_window.setStyleSheet('font-size: 14px; color: white;')
-        layout.addWidget(self.dataset_status_window, current_row, 2, len(data_labels)+1, 2)
+        layout.addWidget(self.dataset_status_window, current_row, 2, len(self.data_labels)+1, 2)
 
-    # Add a dropdown selector for datasets
+        # Add a dropdown selector for datasets
         dataset_selector_label = QLabel('Select Dataset:', self)
         dataset_selector_label.setStyleSheet('font-size: 20px; color: white;')
         layout.addWidget(dataset_selector_label, current_row, 0, 1, 1)
@@ -64,15 +145,17 @@ class ModelTesterApp(QWidget):
         layout.addWidget(self.dataset_selector, current_row, 1, 1, 1)
         current_row = current_row + 1
 
-    # data input fields
-        for i, (label, input_field) in enumerate(zip(data_labels, self.data_input_fields), start=current_row):
+        # data input fields
+        for i, (label, input_field) in enumerate(zip(self.data_labels, self.data_input_fields), start=0):
             label_widget = QLabel(label, self)
             label_widget.setStyleSheet('font-size: 20px; color: white;')  # Increase font size for labels
-            layout.addWidget(label_widget, i, 0, 1, 1)
-            layout.addWidget(input_field, i, 1, 1, 1)
+            input_field.setText(str(default_values[i]))
+            input_field.setStyleSheet('font-size: 16px; color: white;')
+            layout.addWidget(label_widget, current_row, 0, 1, 1)
+            layout.addWidget(input_field, current_row, 1, 1, 1)
             current_row = current_row + 1
 
-    # data buttons
+        # data buttons
         self.load_dataset_button = QPushButton('Load Dataset', self)
         self.load_dataset_button.clicked.connect(self.load_dataset_button_click)
         self.load_dataset_button.setStyleSheet('font-size: 16px; font-weight: bold; background-color: grey; color: white;')
@@ -84,29 +167,25 @@ class ModelTesterApp(QWidget):
         layout.addWidget(self.clear_dataset_button, current_row, 2)
         current_row = current_row + 1
 
-        """
-    # Section 2: Model Parameters
-        """
+        return(current_row, layout)
+    
+    def set_model_parameters_section(self, layout, current_row):
         section2_label = QLabel('Model Parameters', self)
         section2_label.setStyleSheet('font-size: 20px; font-weight: bold; color: white;')
         layout.addWidget(section2_label, current_row, 0)
         current_row = current_row + 1
 
     # model labels
-        model_labels = ["Layer Dimensions:", 'Learning Rate:', 'Hidden Layer Activation', 
+        self.model_labels = ["Layer Dimensions:", 'Learning Rate:', 'Hidden Layer Activation', 
                         'Output Activation', 'Weight Initialization Type', 'Training Iterations:']
-        self.model_input_fields = [QLineEdit(self) for _ in range(len(model_labels))]
+        self.model_input_fields = [QLineEdit(self) for _ in range(len(self.model_labels))]
+        default_values = ["5,5,1", .03, "tanh", "sigmoid", "scalar", "3000"]
 
     # Add model status window
         self.model_status_window = QTextEdit(self)
         self.model_status_window.setReadOnly(True)  # Make it read-only
         self.model_status_window.setStyleSheet('font-size: 14px; color: white;')
-        layout.addWidget(self.model_status_window, current_row, 2, len(model_labels)+1, 2)
-
-    # Add space for plots
-        self.cost_figure = Figure()
-        self.canvas = FigureCanvas(self.cost_figure)
-        layout.addWidget(self.canvas, current_row, 4,len(model_labels)+2,3)
+        layout.addWidget(self.model_status_window, current_row, 2, len(self.model_labels)+1, 2)
 
     # Add a dropdown selector for models
         model_selector_label = QLabel('Select Model Type:', self)
@@ -122,11 +201,13 @@ class ModelTesterApp(QWidget):
         current_row = current_row + 1
 
     # add model labels
-        for i, (label, input_field) in enumerate(zip(model_labels, self.model_input_fields), start=current_row):
+        for i, (label, input_field) in enumerate(zip(self.model_labels, self.model_input_fields), start=0):
             label_widget = QLabel(label, self)
             label_widget.setStyleSheet('font-size: 20px; color: white;')  # Increase font size for labels
-            layout.addWidget(label_widget, i, 0)
-            layout.addWidget(input_field, i, 1)
+            input_field.setText(str(default_values[i]))
+            input_field.setStyleSheet('font-size: 16px; color: white;')
+            layout.addWidget(label_widget, current_row, 0)
+            layout.addWidget(input_field, current_row, 1)
             current_row = current_row+1
 
     # model buttons
@@ -149,67 +230,112 @@ class ModelTesterApp(QWidget):
         self.progress_bar.setStyleSheet('font-size: 12px; font-weight: bold; background-color: black; color: black;')
         layout.addWidget(self.progress_bar, current_row, 1, 1, 1)  # Adjusted row and column span as needed
         current_row = current_row + 1
-
-    # Add Logging window
+        
+        return(current_row, layout)
+    
+    def set_logger_section(self, layout, current_row):
+        # Add Logging window
         self.log_window = QTextEdit(self)
         self.log_window.setReadOnly(True)  # Make it read-only
+        self.log_window.setStyleSheet('font-size: 16px; background-color: black; color: white;')
         layout.addWidget(self.log_window, current_row, 0, 1, 2)  # Adjusted row and column span as needed
         current_row = current_row + 1
 
-    # Add Save Logs button
+        # Add Save Logs button
         self.save_logs_button = QPushButton('Save Logs', self)
         self.save_logs_button.clicked.connect(self.save_logs)
         self.save_logs_button.setStyleSheet('font-size: 16px; font-weight: bold; background-color: grey; color: white;')
         layout.addWidget(self.save_logs_button, current_row, 0,1,1)
-
+        return(current_row, layout)
+    
+    def set_frame_buttons_section(self, layout, current_row):
         """
-    # Add add frame button
+        # Add add frame button
         self.add_frame_button = QPushButton('Add Frame', self)
         self.add_frame_button.clicked.connect(self.add_frame)
         self.add_frame_button.setStyleSheet('font-size: 16px; font-weight: bold; background-color: grey; color: white;')
         layout.addWidget(self.add_frame_button, current_row, 1,1,1)
 
-    # Add delete frame button
+        # Add delete frame button
         self.delete_frame_button = QPushButton('Delete Frame', self)
         self.delete_frame_button.clicked.connect(self.delete_frame)
         self.delete_frame_button.setStyleSheet('font-size: 16px; font-weight: bold; background-color: grey; color: white;')
         layout.addWidget(self.delete_frame_button, current_row, 2,1,1)
 
-    # Add switch frame button
+        # Add switch frame button
         self.switch_frame_button = QPushButton('Switch Frame: {}'.format(self.current_frame), self)
         self.switch_frame_button.clicked.connect(self.switch_frame)
         self.switch_frame_button.setStyleSheet('font-size: 16px; font-weight: bold; background-color: grey; color: white;')
         layout.addWidget(self.switch_frame_button, current_row, 5,1,1)
         """
+        return(current_row, layout)
 
-    # Set the main layout for the window
-        self.setLayout(layout)
-
-    # Set window properties with a larger default size
-        self.setGeometry(0, 0, 1800, 900)  # Adjusted size with space for plots
-        self.setWindowTitle('Model Tester App')
-
-    # Show the window
-        self.show()
-
-    def load_dataset_button_click(self):
-        ds_name = self.dataset_selector.currentText()
+    def set_plotter_section(self, layout, current_row, plot_labels):
+        return(current_row, layout)
+    
+    def get_ds_params(self):
         num_batches_input = self.data_input_fields[0].text()
+        ds_name = self.dataset_selector.currentText()
+        params = [[ds_name, True]]
         if(num_batches_input ==""):
-            num_batches = 1
-            self.log("No batch number provided. Defaulting to 1", "DATA")
+            param = ["NONE", True]
         else:
-            num_batches = int(num_batches_input)
-        loaded, msg = self.driver.load_dataset(ds_name, num_batches, self.current_frame)
+            try:
+                batch_size = int(self.data_input_fields[0].text())
+            except ValueError:
+                self.log("Number of Minibatches must be an integer")
+                return
+            param = [batch_size, True]
+        params.append(param)
+        return params
+    
+    def load_dataset_button_click(self):
+        params = self.get_ds_params()
+        for i in range(len(params)):
+            if(params[0] == "NONE" and params[1] == True):
+                self.log("No {} provided!".format(self.data_labels[i]), "DATA")
+                return
+        loaded, msg = self.driver.load_dataset(params[0][0], params[0][1], self.current_frame)
         if(loaded):
             self.write_to_data_status_window(msg)
-            self.log("Loaded Dataset: {}. See dataset info".format(ds_name), "DATA")
+            self.log("Loaded Dataset: {}. See dataset info".format(params[0][0]), "DATA")
         self.log(msg, "DATA")
 
     def clear_dataset_button_click(self):
         self.driver.clear_dataset(self.current_frame)
         self.log("Clearing data from frame {}".format(self.current_frame), "DATA")
         self.write_to_data_status_window("")
+
+    def get_model_params(self):
+        model_type = self.model_selector.currentText()
+        params = [[model_type, True]]
+        layer_dims = self.model_input_fields[0].text().split(",")
+        for i in range(len(layer_dims)):
+            try:
+                layer_dims[i] = int(layer_dims[i])
+            except ValueError:
+                self.log("All layer dimensions must be integers", "MODEL")
+                return params, False
+        params.append([layer_dims, True])
+        try:
+            lrn_rate = float(self.model_input_fields[1].text())
+        except ValueError:
+            self.log("Learning Rate must be a float", "MODEL")
+            return params, False
+        params.append([lrn_rate, True])
+        hidden_act_fn = self.model_input_fields[2].text()
+        params.append([hidden_act_fn, True])
+        output_act_fn = self.model_input_fields[3].text()
+        params.append([output_act_fn, True])
+        weight_init_type = self.model_input_fields[4].text()
+        params.append([weight_init_type, True])
+        try:
+            iterations = int(self.model_input_fields[5].text())
+        except ValueError:
+            self.log("Training Iterations must be int", "MODEL")
+            return params, False
+        params.append([iterations, True])
+        return params, True
         
     def initialize_model_button_click(self):
         if(self.driver.validate_model(self.current_frame)):
@@ -219,32 +345,10 @@ class ModelTesterApp(QWidget):
             else:
                 self.log("No dataset loaded!", "APP")
                 return
-        ml_type = self.model_selector.currentText()
-        if(ml_type == ""):
-            self.log("Please specify a model type to initialize", "APP")
-            return
-        if(self.model_input_fields[0].text() == ""):
-            self.log("Please provide a comma seperated list of integers for layer dimensions. " +
-                     "*** Do not include feature vector size ***", "APP")
-            return
-        else:
-            layer_dims = self.model_input_fields[0].text().split(",")
-            lrn_rate, hidden_fn, output_fn, init_type = .03, "tanh", "sigmoid", "scalar"
-            for i in range(len(layer_dims)):
-                layer_dims[i] = int(layer_dims[i])
-            if(self.model_input_fields[1].text() != ""):
-                lrn_rate = float(self.model_input_fields[1].text())
-            if(self.model_input_fields[2].text() != ""):
-                hidden_fn = self.model_input_fields[2].text()
-            if(self.model_input_fields[3].text() != ""):
-                output_fn = self.model_input_fields[3].text()
-            if(self.model_input_fields[4].text() != ""):
-                init_type = self.model_input_fields[4].text()
-            if(self.model_input_fields[5].text() != ""):
-                iters = int(self.model_input_fields[5].text())
-            #(self,model_type, layer_dims, frame, lrn_rate=.03, hidden_fn="tanh", output_fn="sigmoid", init_type="scalar"):
-            success, msg = self.driver.initialize_model(ml_type, layer_dims, self.current_frame, lrn_rate, hidden_fn, output_fn, init_type, iters)
-            if(success):
+        params, params_success = self.get_model_params()
+        if(params_success):
+            init_success, msg = self.driver.initialize_model(params[0][0], params[1][0], self.current_frame, params[2][0], params[3][0], params[4][0], params[5][0], params[6][0])
+            if(init_success):
                 self.initialize_model_button.setText("Train Model")
                 self.write_to_model_status_window(msg)
             self.log(msg, "MODEL")
@@ -256,8 +360,14 @@ class ModelTesterApp(QWidget):
         self.initialize_model_button.setText("Initialize Model")
 
     def train_model_button_click(self):
-        msg = self.driver.train_model(self.current_frame)
-        self.plot_cost(msg)
+        self.driver.signal.connect(self.training_updated)
+        self.driver.start()
+        #msg = self.driver.train_model(self.current_frame)
+        #self.plot_cost(msg)
+
+    def training_updated(self, iter, cost):
+        self.update_progress_bar(iter)
+        self.update_plot(cost)
 
     def log(self, message, tag="DEFAULT"):
         # Function to log messages to the QTextEdit
@@ -307,11 +417,7 @@ class ModelTesterApp(QWidget):
     def update_switch_frame_button(self):
         self.switch_frame_button.setText('Switch Frame: {}/{}'.format(self.current_frame, len(self.driver.model_frames)-1))
 
-    def updateProgressBar(self):
-        # Example function to update progress bar (just for demonstration)
-        value = self.progress_bar.value() + 10
-        if value > 100:
-            value = 0
+    def update_progress_bar(self, value):
         self.progress_bar.setValue(value)
 
     def write_to_data_status_window(self, message):
@@ -327,16 +433,13 @@ class ModelTesterApp(QWidget):
         pass
 
     def plot_cost(self, data):
-        ax = self.cost_figure.add_subplot(111)
-        ax.set_title("Cost Values")
-        ax.plot(data, 'b-')
-        self.canvas.draw()       
+        pass  
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = ModelTesterApp()
+    window = ModelTesterUI()
     
     window.log("Session Started: " + window.session_name, "APP")
-    window.log("Available Datasets: " + str(sys_utils.get_available_datasets()), "SYS")
-    window.log("Available Models: " + str(sys_utils.get_available_models()), "SYS")
+    window.log("Available Datasets: " + str(sys_utils.get_available_datasets()), "DATA")
+    window.log("Available Models: " + str(sys_utils.get_available_models()), "MODEL")
     sys.exit(app.exec_())

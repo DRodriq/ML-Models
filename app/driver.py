@@ -1,9 +1,7 @@
-import threading
-import time
 import matplotlib.pyplot as plt
-from queue import Queue
 import sys
 import os
+from PyQt5.QtCore import Qt, pyqtSignal, QThread
 sys.path.insert(1, os.getcwd())
 from models import ff_neuralnet, linear_classifier
 import gui
@@ -12,11 +10,14 @@ from utils import sys_utils
 """
     Implementing interface between UI and state machines
 """
-class Driver():
+class Driver(QThread):
+
+    signal = pyqtSignal(int, float)
+
     def __init__(self):
+        super().__init__()
         self.model_frames = []
         self.model_frames.append(ModelFrame())
-        self.q = Queue()
 
     def load_dataset(self, ds_name, num_batches, frame):
         did_load = False
@@ -69,9 +70,9 @@ class Driver():
     def get_frame_info(self, frame):
         return(self.model_frames[frame].frame_info())
     
-    def train_model(self, frame):
-        msg = self.model_frames[frame].train()
-        return msg
+    def run(self):
+        self.model_frames[0].train(self.signal)
+        #return msg
 
 
 """
@@ -118,15 +119,15 @@ class ModelFrame():
     def clear_model(self):
         self.model = ""
 
-    def train(self):
-        costs = self.model.train(self.dataset.get("Batched Training Set"), self.dataset.get("Batched Training Labels"), self.training_iters)
+    def train(self, signal):
+        costs = self.model.train(self.dataset.get("Batched Training Set"), self.dataset.get("Batched Training Labels"), self.training_iters, signal)
         return costs
 
     def get_model_info(self):
         if(self.model == ""):
             return
         else:
-            model_info = self.model.get_hyperparameters()
+            model_info = self.model.get_parameters()
             return(self.pretty_format(model_info))
         
     @staticmethod
@@ -138,24 +139,4 @@ class ModelFrame():
         return formatted_string
         
     def frame_info(self):
-        return([self.get_ds_info(),])
-
-
-if __name__ == '__main__':
-    app = gui.QApplication(sys.argv)
-    app_window = gui.ModelTesterApp()
-    app_window.log("Session Started: " + app_window.session_name, "GUI")
-    q = Queue()
-    app_window.log("Application Ready: " + app_window.session_name, "DRIVER")
-
-    cmd = command.LoadDatasetCommand()
-    
-    """
-    model_thread = threading.Thread(target=ff_neuralnet.thread_run, args=(q,), daemon=None)
-    #TypeError: run() missing 7 required positional arguments: 'data_set', 'do_standardize_data', 'nn_dims', 'act_fn', 'init_type', 'lrn_rate', and 'training_iterations'
-    model_thread.start()
-    time.sleep(1)
-    while(model_thread.is_alive() == True):
-        print(q.get())
-    """
-    sys.exit(app.exec_())
+        return([self.get_ds_info(), self.get_model_info()])

@@ -15,7 +15,7 @@ class MLModel(ABC):
         pass
 
     @abstractmethod
-    def back_propogation(self):
+    def backpropogation(self):
         pass
 
     @abstractmethod
@@ -27,11 +27,7 @@ class MLModel(ABC):
         pass
 
     @abstractmethod
-    def predict(self, X):
-        pass
-
-    @abstractmethod
-    def score(self, A, Y):
+    def test_model(self, A, Y):
         pass
 
     @abstractmethod

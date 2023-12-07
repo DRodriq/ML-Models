@@ -6,7 +6,6 @@ sys.path.insert(1, os.getcwd())
 from utils import sys_utils, math_utils
 import time
 import datetime
-from queue import Queue
 
 class FF_NeuralNetwork():
     def __init__(self, layers_dims, hidden_activation_func="tanh", output_activation_func="sigmoid", learning_rate=0.01, init_type="scalar", log ="none"):             
@@ -132,7 +131,7 @@ class FF_NeuralNetwork():
         return grads
 
     # Define the multi-layer model using all the helper functions we wrote before
-    def train(self, X, Y, num_iterations=3000, q=None):
+    def train(self, X, Y, num_iterations=3000, sig=None):
         costs = []
         progress_steps = (num_iterations - (num_iterations % 50)) / 50
         percent_finished = 0
@@ -143,10 +142,10 @@ class FF_NeuralNetwork():
                 cost = self.compute_cost(AL, Y[batch_num])
                 self.update_parameters(grads)
             costs.append(cost)
-            if(q is not None):
+            if(sig is not None):
                 if(i > (progress_steps*percent_finished)):
                     percent_finished = percent_finished + 1
-                    q.put(percent_finished, cost)
+                    sig.emit(percent_finished*2, cost)
             if(self.log_level == "standard" and i%100 == 0):
                 print("Cost after {} iterations: {}".format(i, cost))
         return costs
@@ -159,13 +158,13 @@ class FF_NeuralNetwork():
             print(f"The accuracy rate is: {accuracy:.2f}%.")
         return accuracy
     
-    def get_hyperparameters(self):
+    def get_parameters(self):
         hyper_params = {}
         hyper_params.update({"Model Type": "Feed Forward Neural Network"})
         hyper_params.update({"Layer Dimensions": str(self.layer_dims)})
+        hyper_params.update({"Learning Rate": str(self.learning_rate)})
         hyper_params.update({"Hidden Layer Activation Function": str(self.hidden_activation_fn)})
         hyper_params.update({"Output Layer Activation Function": str(self.output_activation_fn)})
-        hyper_params.update({"Learning Rate": str(self.learning_rate)})
         hyper_params.update({"Weight Initialization Type": str(self.init_type)})
         return(hyper_params)
 
@@ -231,7 +230,7 @@ def run(data_set, nn_dims, act_fn, init_type, lrn_rate, training_iterations, bat
     training_accuracy = nn.test_model(X_train, y_train)
     test_accuracy = nn.test_model(X_test, y_test)
 
-    hyper_params = nn.get_hyperparameters()
+    hyper_params = nn.get_parameters()
     mini_batch_size = X_train_batched[0].shape[1]
     ds_size = X_train.shape[0]
     nn.post_process(
@@ -241,7 +240,7 @@ def run(data_set, nn_dims, act_fn, init_type, lrn_rate, training_iterations, bat
     )
 
 if __name__ == '__main__':
-    run("cats", [7, 5, 5, 1], "tanh", "xavier", 0.03, 5000, 5)
+    run("cats", [7, 5, 5, 1], "tanh", "xavier", 0.03, 2000, 5)
 
 
 
