@@ -1,0 +1,17 @@
+********** 12/06/2023-22:22:22 Run **********
+NN Dimensions: [12288, 7, 5, 5, 1]
+Learning Rate: 0.03
+Hidden Layer Act Fn: tanh
+Output Layer Act Fn: sigmoid
+Weight Initialization: xavier
+Data Set: cats
+Iterations 2000
+Dataset Size: 12288
+MiniBatch Size: 41
+Training Accuracy: 100.0
+Test Accuracy: 82.0
+Cost: 0.0
+Execution Time: 42.03
+Iterations/Sec: 47.59
+Costs Plot File: plots\nn_costs-12-06-2023-22_22-22.png
+********************************************
