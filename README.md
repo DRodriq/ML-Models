@@ -18,7 +18,7 @@ There is also an application which can be used by running /app/gui.py
     * Generally define and clean up interfaces
     * Solidify responsibility for state data
     * Add tab for loading a trained model and testing it on a test set
-    * Hide implementation classes in app class
+    * Hide implementations in app class
     * Batch running models with parallelization, result analysis
 * Model Functionality
     * Gradient Checking
