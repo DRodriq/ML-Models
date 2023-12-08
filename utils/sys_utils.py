@@ -1,6 +1,10 @@
 import numpy as np
 import h5py
 import os
+import datetime
+import matplotlib.pyplot as plt
+import datetime
+import pickle
 
 def check_dataset_existence(dataset_name):
     exists = dataset_name in get_available_datasets()
@@ -12,17 +16,27 @@ def get_available_datasets():
     sub_folders = [name for name in os.listdir(ds_folder) if os.path.isdir(os.path.join(ds_folder, name))]
     return sub_folders
 
-def check_model_existence(model_name):
-    return(model_name in get_available_models())
+def check_model_type_existence(model_name):
+    return(model_name in get_available_model_types())
 
-def get_available_models():
+def get_available_model_types():
     proj_dir = os.path.dirname(os.path.realpath(__file__))
     model_folder = proj_dir + "\\..\\models\\"
     files = [name for name in os.listdir(model_folder) if os.path.isfile(os.path.join(model_folder, name))]
     for i in range(len(files)):
         files[i] = files[i].replace(".py", "")
     files.remove("ml_model")
+    files.remove("model_stage")
     return files
+
+def get_saved_models():
+    proj_dir = os.path.dirname(os.path.realpath(__file__))
+    model_folder = proj_dir + "\\..\\results\\saved_models\\"
+    files = [name for name in os.listdir(model_folder) if os.path.isfile(os.path.join(model_folder, name))]
+    return files
+
+def check_saved_model_existence(model_name):
+    return(model_name in get_saved_models())
 
 def load_dataset(ds_name):
     if(check_dataset_existence(ds_name) == False):
@@ -133,12 +147,49 @@ def batch(X, n):
     #    np.reshape(batches, (batches[i].shape[0], 1))
     return batches
 
-if __name__ == '__main__':
-    data = import_data("cats", 3)
-    print(get_available_datasets())
-    print(get_available_models())
+def post_process(params):
+    now = datetime.datetime.now()
+    timestamp = now.strftime("%m/%d/%Y-%H:%M:%S")
+    file_friendly_ts = now.strftime("%m-%d-%Y-%H_%M-%S")
+    proj_dir = os.path.dirname(os.path.realpath(__file__))
+    results_folder = proj_dir + "\\..\\results\\"
+    results_file = results_folder + "logs\\ff_nn.log"
+    costs_file_name = "plots\\nn_costs-" + file_friendly_ts + ".png"
+    costs_file = results_folder + costs_file_name
 
-    for key in data.keys():
-        print("Key: {}".format(key))
+    entry_title = "********** {} Stage Stats **********\n".format(timestamp)
 
-    data_info = print(format_ds_info(data))
+    if("Costs", True in params.items()):
+        plt.plot(params.get("Costs"))
+        plt.title(costs_file_name.replace(".png", ''))
+        plt.xlabel("Iteration")
+        plt.ylabel("Cost")
+        plt.savefig(costs_file)
+        f = open(results_file, "a")
+
+    results = ""
+    for key, value in params.items():
+        if(key != "Costs"):
+            results = results + "{}: {}\n".format(key, str(value))
+
+    other_results_info = "Costs Plot File: {}\n".format(costs_file_name)
+    f.write(entry_title)
+    f.write(results)
+    f.write(other_results_info)
+    f.write("********************************************\n")
+   
+def save_datastructure(data_structure, file_name):
+    proj_dir = os.path.dirname(os.path.realpath(__file__))
+    results_folder = proj_dir + "\\..\\results\\"
+    full_path = results_folder + "saved_models\\" + file_name
+    file = open(full_path, 'w+b')
+    pickle.dump(data_structure, file)
+
+def load_datastructure(name):
+    if(check_saved_model_existence(name)):
+        proj_dir = os.path.dirname(os.path.realpath(__file__))
+        results_folder = proj_dir + "\\..\\results\\"
+        ds_file = results_folder + "saved_models\\" + name
+        with open(ds_file, 'rb') as file:
+            loaded_data = pickle.load(file)
+        return(loaded_data)

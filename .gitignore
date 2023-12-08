@@ -1,1 +1,4 @@
 */__pycache__
+results/logs/Session*
+results/plots/*
+results/saved_models/*

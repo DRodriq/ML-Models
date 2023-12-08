@@ -15,3 +15,32 @@ Execution Time: 42.03
 Iterations/Sec: 47.59
 Costs Plot File: plots\nn_costs-12-06-2023-22_22-22.png
 ********************************************
+********** 12/07/2023-21:16:14 Stage Stats **********
+Model Type: Feed Forward Neural Network
+Layer Dimensions: [12288, 5, 5, 1]
+Learning Rate: 0.03
+Hidden Layer Activation Function: tanh
+Output Layer Activation Function: sigmoid
+Weight Initialization Type: xavier
+Model Trained: True
+Training Iterations: 2000
+Time Spent Training: 29.16
+Average Training Iterations / Second: 69
+Costs Plot File: plots\nn_costs-12-07-2023-21_16-14.png
+********************************************
+********** 12/07/2023-21:24:37 Stage Stats **********
+Model Type: Feed Forward Neural Network
+Layer Dimensions: [12288, 5, 5, 1]
+Learning Rate: 0.03
+Hidden Layer Activation Function: tanh
+Output Layer Activation Function: sigmoid
+Weight Initialization Type: xavier
+Model Trained: True
+Datasets Trained On: ['cats']
+Training Set Accuracy: 98.56
+Test Set Accuracy: 68.0
+Training Iterations: 2000
+Time Spent Training: 33.36
+Average Training Iterations / Second: 60
+Costs Plot File: plots\nn_costs-12-07-2023-21_24-37.png
+********************************************

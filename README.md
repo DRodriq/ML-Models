@@ -14,12 +14,9 @@ There is also an application which can be used by running /app/gui.py
 
 ## Roadmap ##
 
-* Adding application front end
-    * Generally define and clean up interfaces
-    * Solidify responsibility for state data
-    * Add tab for loading a trained model and testing it on a test set
-    * Hide implementations in app class
-    * Batch running models with parallelization, result analysis
+* Application
+    * Batch running models with parallelization
+    * File and results management tab
 * Model Functionality
     * Gradient Checking
     * Gradient descent with momentum, RMSProp, ADAM implementations
@@ -33,9 +30,9 @@ There is also an application which can be used by running /app/gui.py
 * Option to save model parameters, load models from file
 * Dataset Features
     * Shuffle datasets around before each run, split into training, dev, tests sets
-    * Batching
     * Synthesize new data examples from existing - rotations, blur, crops
     * Scale, standardize, analyze mean and variance
+    * Add and test new datasets
 * Interested Models:
     * RNN
     * CNN
@@ -46,9 +43,12 @@ There is also an application which can be used by running /app/gui.py
     * ...
 
 ## Application UI ##
-Main tab with default values
-![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/proj_pic1.png)
-Main tab with loaded dataset and model
-![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/proj_pic2.png)
+Load datasets and train models
+![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/presentation/proj_pic1.png)
+Test models and save them to load later
+![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/presentation/proj_pic2.png)
 Live cost plot
-![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/proj_pic3.png)
+![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/presentation/proj_pic3.png)
+
+## System Design ##
+![alt text](https://github.com/DRodriq/ML-Models/blob/main/docs/sys_design/interaction_diagram.png)
