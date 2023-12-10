@@ -74,6 +74,12 @@ class ModelTesterUI(QWidget):
         self.cost_plot.setXRange(0, 100)
         self.cost_plot.plotItem.setMouseEnabled(x=False)
 
+        self.clear_cost_plot_button = QPushButton('Clear Plot', self)
+        self.clear_cost_plot_button.clicked.connect(self.clear_cost_plot_button_click)
+        self.clear_cost_plot_button.setStyleSheet('font-size: 16px; font-weight: bold; background-color: grey; color: white;')
+        layout.addWidget(self.clear_cost_plot_button, current_row+4, 0,1,1) 
+
+        """
         self.third_plot = pyqtgraph.PlotWidget()
         layout.addWidget(self.third_plot, current_row+3, 0, 3, 3)
         #pen = pyqtgraph.mkPen(color=(255, 255, 255), width=3, size="20pt")
@@ -95,12 +101,16 @@ class ModelTesterUI(QWidget):
         self.fourth_plot.showGrid(x=True, y=True)
         self.fourth_plot.setYRange(-1, 10)
         self.fourth_plot.plotItem.setMouseEnabled(y=False)
+        """
 
         tab_widget.setLayout(layout)
 
     def update_cost_plot(self, cost):
         self.cost_data_buffer.append(cost)
         self.cost_plot.plot(self.cost_data_buffer, pen=self.pen)
+
+    def clear_cost_plot(self):
+        self.cost_plot.clear()
 
     """
         Section Factory
@@ -391,11 +401,14 @@ class ModelTesterUI(QWidget):
         self.controller.clear_model(self.current_stage)
         self.log("Clearing model from stage {}".format(self.current_stage), "MODEL")
         self.cost_data_buffer.clear()
-        self.update_cost_plot(0)
+        self.clear_cost_plot()
         self.model_status_window.setText("")
         self.clear_model_tester_window()
         self.validate_train_model_button()
         self.update_progress_bar(0)
+
+    def clear_cost_plot_button_click(self):
+        self.clear_cost_plot()
 
     def save_model_button_click(self):
         fname, ok = QInputDialog.getText(self, 'Save Model', 'Save as:')

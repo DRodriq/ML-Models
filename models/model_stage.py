@@ -163,7 +163,6 @@ class ModelStage(ModelStageInterface):
                 self.last_test_accuracy = self.model.test_model(self.dataset.get("Flattened Test Set"), self.dataset.get("Test Set Labels"), self.console_log)
                 msg = "Training Accuracy: {} | Test Accuracy {}".format(self.last_training_accuracy, self.last_test_accuracy)
                 did_Test = True
-                print("msg")
             else:
                 msg = "Cannot test model. No model loaded"
         else:
