@@ -37,10 +37,7 @@ There is also an application which can be used by running /app/gui.py
     * RNN
     * CNN
     * NEAT, hyperNEAT, ES-HyperNEAT
-    * Graph NN
-    * Reservoir computing, NVAR
-    * GANs
-    * ...
+    * ART
 
 ## Application UI ##
 Load datasets and train models

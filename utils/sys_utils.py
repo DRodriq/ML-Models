@@ -103,6 +103,12 @@ def import_data(data_set_name, batches=1):
     for i in range(len(data)):
         data_dict.update({keys[i]:data[i]})
 
+    print(np.average(X_train_batched))
+    print(np.amax(X_train_batched))
+    print(np.amin(X_train_batched))
+    print(np.amax(y_train_batched))
+    print(np.amin(y_train_batched))
+
     return(data_dict)
 
 def format_ds_info(data_dict):

@@ -4,7 +4,7 @@ import os
 sys.path.insert(1, os.getcwd())
 from utils import sys_utils
 import time
-from models import ff_neuralnet
+from models import ff_neuralnet, ml_model
 from abc import ABC, abstractmethod
 
 class ModelStageInterface(ABC):
@@ -77,7 +77,9 @@ class ModelStage(ModelStageInterface):
         self.dataset = sys_utils.import_data(ds_name, batches)
         msg = ""
         if(self.model_isloaded()):
-            if(not(self.model.layer_dims[0] == self.dataset.get("Flattened Training Set").shape[0])):
+            model_info = self.model.get_parameters()
+            layers = model_info.get("Layer Dimensions")
+            if(not(layers[0] == self.dataset.get("Flattened Training Set").shape[0])):
                 msg = "***WARNING!*** Current model input layer does not match training set feature vector size!"
         msg = msg + "Dataset {} successfully loaded".format(ds_name)
         return (True, msg)
@@ -180,21 +182,20 @@ class ModelStage(ModelStageInterface):
     def get_stage_info(self):
         is_info = False
         s_info = {}
-        is_info, m_info = self.get_model_info()
-        if(is_info):
-            s_info = m_info
-            s_info.update({"Model Trained": False})
-            if(self.model_hastrained()):
-                s_info.update({"Model Trained": True})
-                s_info.update({"Datasets Trained On": self.ds_trained_on})
-                s_info.update({"Training Set Accuracy": self.last_training_accuracy})
-                s_info.update({"Test Set Accuracy": self.last_test_accuracy})
-                s_info.update({"Costs": self.training_costs})
-                s_info.update({"Training Iterations": self.training_iterations_run})
-                s_info.update({"Time Spent Training": self.time_spent_training})
-                s_info.update({"Average Training Iterations / Second": round(self.training_iterations_run / self.time_spent_training)})
-            is_info = True
-        return is_info, m_info
+        m_info = self.get_model_info()
+        s_info = m_info
+        s_info.update({"Model Trained": False})
+        if(self.model_hastrained()):
+            s_info.update({"Model Trained": True})
+            s_info.update({"Datasets Trained On": self.ds_trained_on})
+            s_info.update({"Training Set Accuracy": self.last_training_accuracy})
+            s_info.update({"Test Set Accuracy": self.last_test_accuracy})
+            s_info.update({"Costs": self.training_costs})
+            s_info.update({"Training Iterations": self.training_iterations_run})
+            s_info.update({"Time Spent Training": self.time_spent_training})
+            s_info.update({"Average Training Iterations / Second": round(self.training_iterations_run / self.time_spent_training)})
+        is_info = True
+        return is_info, s_info
     
     def save_model(self, name):
         sys_utils.save_datastructure(self.model, name)

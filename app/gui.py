@@ -71,7 +71,6 @@ class ModelTesterUI(QWidget):
         self.cost_plot.setLabel("left", "Cost")
         self.cost_plot.setLabel("bottom", "Training Iteration")
         self.cost_plot.showGrid(x=True, y=True)
-        self.cost_plot.setXRange(0, 100)
         self.cost_plot.plotItem.setMouseEnabled(x=False)
 
         self.clear_cost_plot_button = QPushButton('Clear Plot', self)
@@ -358,7 +357,7 @@ class ModelTesterUI(QWidget):
             if(params[0] == "NONE" and params[1] == True):
                 self.log("No {} provided!".format(self.data_labels[i]), "DATA")
                 return
-        loaded, msg = self.controller.load_dataset(params[0][0], params[0][1], self.current_stage)
+        loaded, msg = self.controller.load_dataset(params[0][0], params[1][0], self.current_stage)
         if(loaded):
             self.write_to_data_status_window(self.controller.get_dataset_info(self.current_stage))
         self.validate_train_model_button()
@@ -409,6 +408,7 @@ class ModelTesterUI(QWidget):
 
     def clear_cost_plot_button_click(self):
         self.clear_cost_plot()
+        self.cost_data_buffer.clear()
 
     def save_model_button_click(self):
         fname, ok = QInputDialog.getText(self, 'Save Model', 'Save as:')
